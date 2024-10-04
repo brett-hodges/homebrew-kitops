@@ -1,9 +1,9 @@
 # homebrew-kitops
-Homebrew Tap (Test)
+Homebrew Tap for KitOps CLI
 
 ## How To Use
 
-### Add repository:
+### Add the Homebrew Tap for KitOps CLI:
 ```bash
 brew tap brett-hodges/kitops
 ```
@@ -13,7 +13,21 @@ brew tap brett-hodges/kitops
 brew install kitops
 ```
 
-### Upgrade the KitOps CLI to the latest versions:
+### Test KitOps CLI Installation:
+```bash
+kit version
+```
+
+### Upgrade KitOps CLI to the latest versions:
 ```bash
 brew upgrade kitops
 ```
+
+### Uninstall KitOps CLI
+```bash
+brew uninstalll kitops
+```
+
+### Remove the Homebrew Tap for KitOps CLI
+```bash
+brew untap brett-hodges/kitops
