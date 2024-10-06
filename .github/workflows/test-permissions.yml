@@ -1,0 +1,75 @@
+name: Permissions Testing
+
+on: 
+  workflow_dispatch:
+    inputs:
+      skip_signing:
+        description: 'Skip code signing'
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: 'Release tag'
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*'
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  INIT_IMAGE_NAME: ${{ github.repository }}-init
+  
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  test-permissions:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout the homebrew-kitops repository (jozu-ai/homebrew-kitops)
+      - name: Checkout homebrew-kitops
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          ###### CHANGE THIS TO jozu-ai/homebrew-kitops ######
+          repository: brett-hodges/homebrew-kitops
+          ref: 'main'
+          path: homebrew-kitops
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: List dirs after checkout homebrew-kitops
+        run: |
+            ls
+  
+      - name: List contents of homebrew-kitops
+        run: |
+            shopt -s failglob
+            pushd homebrew-kitops
+            ls
+            popd
+      - name: Commit Homebrew Formula to Tap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ inputs.release_tag}}
+          ##### CHANGE REPO TO jozu-ai/homebrew-kitops
+          REPO: "brett-hodges/homebrew-kitops"
+        run: |
+            pushd homebrew-kitops
+            rm kitops.rb
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            PR_BRANCH="${{ github.ref_name }}-homebrew-tap-update"
+            git fetch origin main
+            git branch "$PR_BRANCH"
+            git checkout "$PR_BRANCH"
+            git pull origin --ff-only "${PR_BRANCH}" || true
+            git config --global user.name "${GITHUB_ACTOR}"
+            git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+            git add --all
+            git commit -m "homebrew: update Homebrew Tap Formula for ${{ github.ref_name }}"
+            git push origin "${PR_BRANCH}"
+            gh pr create --fill --base main --head "${PR_BRANCH}"
+            git checkout "${CURRENT_BRANCH}"
+            popd
